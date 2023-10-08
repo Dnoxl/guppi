@@ -1,4 +1,11 @@
-#Version: Alpha 0.0.1
+#Version: 0.1
+
+"""
+TODO: Check for possible performance optimization, reduce redundancy
+TODO: Add localization
+TODO: Create some sort of interface for customization for each server, web interface?
+"""
+
 import discord
 import os
 import time
@@ -58,9 +65,6 @@ class StartupTimes:
     def update_startup_times(self, new_time):
         """
         The function updates the startup times in a SQLite database with a new time value.
-        
-        :param new_time: The `new_time` parameter is the value representing the startup time that you
-        want to insert into the `startup_times` table in the database
         """
         with sqlite3.connect(self.db_path) as con:
             c = con.cursor()
@@ -119,12 +123,6 @@ class Settings:
         """
         The function checks if a given setting exists in a SQLite database table and returns a boolean
         value indicating its presence.
-        
-        :param setting: The "setting" parameter is a string that represents the name of the setting you
-        want to check in the database
-        :type setting: str
-        :return: a boolean value. It returns True if the specified setting exists in the database table
-        "settings" and has a non-null value, and False otherwise.
         """
         with sqlite3.connect(self.db_path) as con:
             c = con.cursor()
@@ -135,11 +133,6 @@ class Settings:
     def retrieve_setting(self, setting: str) -> str:
         """
         The function retrieves the value of a specific setting from a SQLite database.
-        
-        :param setting: The "setting" parameter is a string that represents the name of the setting you
-        want to retrieve from the database
-        :type setting: str
-        :return: the value of the specified setting from the database.
         """
         with sqlite3.connect(self.db_path) as con:
             c = con.cursor()
@@ -149,13 +142,6 @@ class Settings:
     def update_settings(self, value: str, setting: str):
         """
         The function updates a setting in a SQLite database with a given value.
-        
-        :param value: The `value` parameter is the new value that you want to update for the specified
-        setting. It is of type `str`
-        :type value: str
-        :param setting: The "setting" parameter is a string that represents the name of the setting to
-        be updated or inserted into the database
-        :type setting: str
         """
         with sqlite3.connect(self.db_path) as con:
             c = con.cursor()
@@ -186,7 +172,7 @@ class MyView(discord.ui.View):
             await interaction.response.defer()
             await interaction.message.delete()
             logger.info('Restarting')
-            await restart(None)
+            await restart()
         except:logger.error(traceback.format_exc())
 
 async def status_msg():
@@ -210,8 +196,8 @@ async def status_msg():
         while len(load_times) > 3:
             load_times.pop(0)
     startup.clear_startup_times()
-    for lt in load_times:
-        startup.update_startup_times(lt)
+    for load_time in load_times:
+        startup.update_startup_times(load_time)
     avg_load_time = round(sum(load_times)/len(load_times),2)
     text = f'Bot was ready in: {load_time}s\nAvg. time until ready: {avg_load_time}s'
     embed=discord.Embed(colour=0x2ecc71)
@@ -220,12 +206,8 @@ async def status_msg():
         text=f'Uptime: {str(datetime.timedelta(seconds=int(time.perf_counter() - bot_starttime)))}'
     )
     msg = await chan.send(embed=embed,view=MyView())
-    execs = []
-    avgexectime = 0
-    delay = 5
     while True:
-        await asyncio.sleep(delay)
-        s = time.perf_counter()
+        await asyncio.sleep(5)
         text = f'Bot was ready in: {load_time}s\nAvg. time until ready: {avg_load_time}s'
         embed=discord.Embed(colour=0x2ecc71)
         embed.add_field(name='Performance Information:', value=text)
@@ -238,11 +220,6 @@ async def status_msg():
             msg = await chan.send(embed=embed,view=MyView())
         except:
             logger.error(traceback.format_exc())
-        e = time.perf_counter()
-        execs.append(e - s)
-        execs.pop(0) if len(execs) > 10 else None
-        avgexectime = round(sum(execs) / len(execs), 5)
-        delay = 5 - avgexectime if avgexectime <= 5 else avgexectime
 
 @tasks.loop(seconds=10)
 async def version_control():
@@ -275,11 +252,6 @@ async def on_command_error(ctx, error):
     """
     The function `on_command_error` handles different types of errors and sends appropriate responses
     based on the error type.
-    
-    :param ctx: The `ctx` parameter is an object representing the context of the command being executed.
-    It contains information such as the message, the author, the channel, and the guild
-    :param error: The `error` parameter is the exception that was raised when a command encountered an
-    error. It can be any type of exception, such as `MissingPermissions` or `NotOwner`
     """
     try:
         if isinstance(error, MissingPermissions):
@@ -316,17 +288,21 @@ def run():
     """
     The function runs a bot by loading extensions and running it with the bot token.
     """
-    with open(Path(sys.path[0], 'bot.log'), 'a', encoding='utf-8') as f:
-        f.write(f"\n\n-----{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}-----\n")
-    settings = Settings()
-    for extension in bot_extensions:     
-        bot.load_extension(extension)
-    bot.run(settings.bottoken)
+    try:
+        with open(Path(sys.path[0], 'bot.log'), 'a', encoding='utf-8') as f:
+            f.write(f"\n\n-----{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}-----\n")
+        settings = Settings()
+        for extension in bot_extensions: 
+            try:    
+                bot.load_extension(extension)
+            except:logger.error(traceback.format_exc())
+        bot.run(settings.bottoken)
+    except:logger.error(traceback.format_exc())
 
 global bot_starttime, bot_status, bot_extensions
 bot_starttime = time.perf_counter()
 bot_status = "Undergoing maintenance"
-bot_extensions = ('cogs.generalutility', 'cogs.aboutme', 'cogs.automod')
+bot_extensions = ('cogs.generalutility', 'cogs.aboutme')
 
 #Declare all necessary Variables before this
 run()

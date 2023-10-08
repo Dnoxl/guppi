@@ -1,3 +1,6 @@
 *.db
 *.log
 *.pyc
+.vscode
+.vs
+__pycache__
