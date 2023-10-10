@@ -5,17 +5,19 @@
             "deleted_messages": "Deleting {} messages."
         },
         "cog_command_error": {
-            "MissingPermissions": "",
-            "NotOwner": ""
+            "MissingPermissions": "You do not have the necessary permissions.",
+            "NotOwner": "You are not my owner."
         }
     },
     "setup": {
-        "on_guild_join": {}
+        "server_setup": {
+            "bot_info": ""
+        }
     },
     "guppi": {
         "on_command_error": {
-            "MissingPermissions": "You do not have the necessary permissions.",
-            "NotOwner": "You are not my owner."
+            "MissingPermissions": "",
+            "NotOwner": ""
         }
     }
 }

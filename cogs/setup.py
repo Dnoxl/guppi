@@ -60,10 +60,10 @@ class ServerSetup(commands.Cog):
         self.bot = bot
         loc = Localization('de')
 
-    @commands.Cog.listener()
-    #localization
-    async def on_guild_join(self, guild:discord.Guild):
-        print(guild.id, guild.name)
+    @slash_command(name='serversetup', description='Sends a server setup message')
+    #localization: bot_info
+    async def server_setup(self, ctx):
+        pass
 
 def setup(bot):
     bot.add_cog(ServerSetup(bot))

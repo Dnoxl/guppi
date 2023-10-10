@@ -5,12 +5,14 @@
             "deleted_messages": "L\u00f6sche {} Nachrichten."
         },
         "cog_command_error": {
-            "MissingPermissions": "",
-            "NotOwner": ""
+            "MissingPermissions": "Du hast nicht die ben\u00f6tigten Berechtigungen.",
+            "NotOwner": "Du bist nicht mein Besitzer."
         }
     },
     "setup": {
-        "on_guild_join": {}
+        "server_setup": {
+            "bot_info": ""
+        }
     },
     "guppi": {
         "on_command_error": {

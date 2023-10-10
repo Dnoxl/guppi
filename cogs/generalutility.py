@@ -62,7 +62,7 @@ class GeneralUtility(commands.Cog):
     @utility.command(name='servericon', description='Fetches the servers Icon.')
     async def get_guildicon(self, ctx):
         try:
-            await ctx.respond(ctx.guild.icon.url+' '+ctx.locale)
+            await ctx.respond(ctx.guild.icon.url)
         except:logger.error(traceback.format_exc())
 
     @utility.command(name='useravatar', description='Fetches a users avatar.')
@@ -100,10 +100,11 @@ class GeneralUtility(commands.Cog):
         appropriate response based on the type of error.
         """
         try:
+            loc = Localization(ctx.locale)
             if isinstance(error, MissingPermissions):
-                await ctx.respond("You don't have permission to use this command.", ephemeral=True)
+                await ctx.respond(loc.cog_command_error.MissingPermissions, ephemeral=True)
             if isinstance(error, NotOwner):
-                await ctx.respond("You are not my Owner.", ephemeral=True)
+                await ctx.respond(loc.cog_command_error.NotOwner, ephemeral=True)
         except:logger.error(traceback.format_exc())
             
 def setup(bot):
