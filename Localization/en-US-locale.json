@@ -1,0 +1,21 @@
+{
+    "generalutility": {
+        "clear_msgs": {
+            "deleted_message": "Deleting one message.",
+            "deleted_messages": "Deleting {} messages."
+        },
+        "cog_command_error": {
+            "MissingPermissions": "",
+            "NotOwner": ""
+        }
+    },
+    "setup": {
+        "on_guild_join": {}
+    },
+    "guppi": {
+        "on_command_error": {
+            "MissingPermissions": "You do not have the necessary permissions.",
+            "NotOwner": "You are not my owner."
+        }
+    }
+}

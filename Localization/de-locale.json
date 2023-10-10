@@ -1,0 +1,21 @@
+{
+    "generalutility": {
+        "clear_msgs": {
+            "deleted_message": "L\u00f6sche eine Nachricht.",
+            "deleted_messages": "L\u00f6sche {} Nachrichten."
+        },
+        "cog_command_error": {
+            "MissingPermissions": "",
+            "NotOwner": ""
+        }
+    },
+    "setup": {
+        "on_guild_join": {}
+    },
+    "guppi": {
+        "on_command_error": {
+            "MissingPermissions": "",
+            "NotOwner": ""
+        }
+    }
+}

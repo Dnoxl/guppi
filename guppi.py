@@ -218,8 +218,6 @@ async def status_msg():
             await msg.edit(embed=embed,view=MyView())
         except discord.NotFound:
             msg = await chan.send(embed=embed,view=MyView())
-        except:
-            logger.error(traceback.format_exc())
 
 @tasks.loop(seconds=10)
 async def version_control():
@@ -248,6 +246,7 @@ async def restart():
     except:logger.error(traceback.format_exc())
 
 @bot.event
+#localization: MissingPermissions, NotOwner
 async def on_command_error(ctx, error):
     """
     The function `on_command_error` handles different types of errors and sends appropriate responses
@@ -302,7 +301,7 @@ def run():
 global bot_starttime, bot_status, bot_extensions
 bot_starttime = time.perf_counter()
 bot_status = "Undergoing maintenance"
-bot_extensions = ('cogs.generalutility', 'cogs.aboutme')
+bot_extensions = ('cogs.generalutility', 'cogs.aboutme', 'cogs.setup')
 
 #Declare all necessary Variables before this
 run()
