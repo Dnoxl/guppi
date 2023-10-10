@@ -163,7 +163,7 @@ class MyView(discord.ui.View):
             print("Bot Closed")
             logger.info("Bot Closed")
             await bot.close()
-            sys.exit(0)
+            sys.exit(1)
         except:logger.error(traceback.format_exc())
     @discord.ui.button(label="Restart", style=discord.ButtonStyle.danger)
     @commands.is_owner()
