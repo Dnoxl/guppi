@@ -14,7 +14,18 @@ from discord.commands import slash_command, Option
 from discord.ext.commands import MissingPermissions, NotOwner
 from pathlib import Path
 
+locales = ('en-US', 'de')
+owners = [459747395027075095]
+
 logger = logging.getLogger()
+
+def is_authorized(**perms):
+    original = commands.has_permissions(**perms).predicate
+    async def extended_check(ctx):
+        if ctx.guild is None:
+            return False
+        return ctx.author.id in owners or await original(ctx)
+    return commands.check(extended_check)
 
 # The above class is a localization class that loads a JSON file containing localization data and
 # assigns the data to class attributes.

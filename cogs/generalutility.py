@@ -9,12 +9,24 @@ import discord
 import logging
 import traceback
 import json
+import asyncio
 from discord.ext import commands, tasks
 from discord.commands import slash_command, Option
 from discord.ext.commands import MissingPermissions, NotOwner
 from pathlib import Path
 
+locales = ('en-US', 'de')
+owners = [459747395027075095]
+
 logger = logging.getLogger()
+
+def is_authorized(**perms):
+    original = commands.has_permissions(**perms).predicate
+    async def extended_check(ctx):
+        if ctx.guild is None:
+            return False
+        return ctx.author.id in owners or await original(ctx)
+    return commands.check(extended_check)
 
 class Localization:
     def __init__(self, locale):
@@ -54,42 +66,49 @@ class Localization:
             except:logger.error(traceback.format_exc())
 
 class GeneralUtility(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot:discord.Bot):
         self.bot = bot
+        super().__init__()
+        self.clear_msgs.description_localizations = {locale: Localization(locale).clear_msgs.command_desc for locale in locales}
 
     utility = discord.SlashCommandGroup('utility')
 
-    @utility.command(name='servericon', description='Fetches the servers Icon.')
+    @commands.Cog.listener()
+    async def on_ready(self):
+        [setattr(option, 'description_localizations', {locale: Localization(locale).clear_msgs.amount_desc for locale in locales}) for option in self.clear_msgs.options if option.name == 'amount']
+        [setattr(option, 'name_localizations', {locale: Localization(locale).clear_msgs.amount_name for locale in locales}) for option in self.clear_msgs.options if option.name == 'amount']
+
+    @utility.command(name='servericon', description='Fetches the servers Icon.', guild_only=True)
+    #localization: command_desc
     async def get_guildicon(self, ctx):
         try:
             await ctx.respond(ctx.guild.icon.url)
         except:logger.error(traceback.format_exc())
 
     @utility.command(name='useravatar', description='Fetches a users avatar.')
-    async def get_avatar(self, ctx, member: Option(discord.Member)):
+    #localization: command_desc, member_name, member_desc
+    async def get_avatar(self, ctx, user: Option(discord.Member)):
         try:
-            await ctx.respond(member.avatar.url)
+            await ctx.respond(user.avatar.url)
         except:logger.error(traceback.format_exc())
 
-    @utility.command(name='clear',description='[Admin] Clears a specified amount of messages from the channel. ')
-    @commands.has_permissions(administrator=True)
-    #localization: deleted_message, deleted_messages
+    @utility.command(name='clear',description='Clears a specified amount of messages from the channel.', guild_only=True)
+    @commands.check(is_authorized(administrator=True))
+    #localization: command_desc, deleted_message, deleted_messages, amount_desc, amount_name
     async def clear_msgs(self, ctx:discord.ApplicationContext, amount: Option(int, description='The maximum amount of messages to clear.')):
         try:
             loc = Localization(ctx.locale)
-            msgs = []
+            msg_count = 0
             async for msg in ctx.channel.history(limit=amount):
-                    msgs.append(msg)
-                    if len(msgs) == amount:
-                        break
-            if len(msgs) < amount:
-                amount = len(msgs)
-            if len(msgs) < amount:
-                amount = len(msgs)
+                msg_count += 1
+                if msg_count == amount:
+                    break
+            if msg_count < amount:
+                amount = msg_count
             if amount == 1:
-                await ctx.respond(loc.clear_msgs.deleted_message,ephemeral=True)
+                await ctx.respond(loc.clear_msgs.deleted_message, ephemeral=True, delete_after=10)
             else:
-                await ctx.respond(loc.clear_msgs.deleted_messages.format(amount),ephemeral=True)
+                await ctx.respond(loc.clear_msgs.deleted_messages.format(amount), ephemeral=True, delete_after=10)
             await ctx.channel.purge(limit=amount)   
         except:logger.error(traceback.format_exc())
         

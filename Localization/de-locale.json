@@ -1,10 +1,36 @@
 {
+    "aboutme": {
+        "aboutmodal_callback": {},
+        "addselect": {
+            "placeholder": "F\u00fcge deinem Aboutme ein Feld hinzu"
+        },
+        "removeselect": {
+            "placeholder": "Entferne ein Feld aus deinem Aboutme"
+        }
+    },
     "generalutility": {
         "clear_msgs": {
+            "amount_desc": "Die Menge an zu l\u00f6schenden Nachrichten",
+            "amount_name": "anzahl",
+            "command_desc": "L\u00f6scht x Nachrichten aus dem Channel",
             "deleted_message": "L\u00f6sche eine Nachricht.",
             "deleted_messages": "L\u00f6sche {} Nachrichten."
         },
         "cog_command_error": {
+            "MissingPermissions": "Du hast nicht die ben\u00f6tigten Berechtigungen.",
+            "NotOwner": "Du bist nicht mein Besitzer."
+        },
+        "get_avatar": {
+            "command_desc": "Sendet den Avatar eines Benutzers",
+            "member_desc": "Der Benutzer dessen Avatar du m\u00f6chtest",
+            "member_name": "benutzer"
+        },
+        "get_guildicon": {
+            "command_desc": "Sendet das Guild Icon"
+        }
+    },
+    "guppi": {
+        "on_command_error": {
             "MissingPermissions": "Du hast nicht die ben\u00f6tigten Berechtigungen.",
             "NotOwner": "Du bist nicht mein Besitzer."
         }
@@ -12,12 +38,6 @@
     "setup": {
         "server_setup": {
             "bot_info": ""
-        }
-    },
-    "guppi": {
-        "on_command_error": {
-            "MissingPermissions": "",
-            "NotOwner": ""
         }
     }
 }

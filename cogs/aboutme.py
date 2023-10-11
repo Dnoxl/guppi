@@ -18,7 +18,18 @@ from discord.commands import slash_command, Option, user_command
 from discord.ext.commands import MissingPermissions, NotOwner
 from pathlib import Path
 
+locales = ('en-US', 'de')
+owners = [459747395027075095]
+
 logger = logging.getLogger()
+
+def is_authorized(**perms):
+    original = commands.has_permissions(**perms).predicate
+    async def extended_check(ctx):
+        if ctx.guild is None:
+            return False
+        return ctx.author.id in owners or await original(ctx)
+    return commands.check(extended_check)
 
 class Localization:
     def __init__(self, locale):
@@ -75,32 +86,19 @@ class ConfigAboutme(discord.ui.View):
                 con.commit()
                 self.remops = [row[0] for row in c.execute('SELECT info FROM aboutme WHERE user_id = ? AND toggle = 1',(user_id,)).fetchall()]
                 self.addops = [row[0] for row in c.execute('SELECT info FROM aboutme WHERE user_id = ? AND toggle = 0',(user_id,)).fetchall()]
-            self.aoptions = []
-            self.roptions = []
-            if self.addops:
-                self.aoptions.extend(discord.SelectOption(label=info, value=info) for info in self.addops)
-                self.addselect.options = self.aoptions
-            else:
-                self.addselect.disabled = True
-            if self.remops:
-                self.roptions.extend(discord.SelectOption(label=info, value=info) for info in self.remops)
-                self.removeselect.options = self.roptions
-            else:
-                self.removeselect.disabled = True
+                self.addselect.options = [discord.SelectOption(label=info, value=info) for info in self.addops] if self.addops else []
+                self.addselect.disabled = True if not self.addops else False
+                self.removeselect.options = [discord.SelectOption(label=info, value=info) for info in self.remops] if self.remops else []
+                self.removeselect.disabled = True if not self.remops else False
+                self.addselect.placeholder = {locale: Localization(locale).addselect.placeholder for locale in locales}
         except:logger.error(traceback.format_exc())
     
     @discord.ui.select(placeholder='Add a field to your Aboutme', options=[discord.SelectOption(label='Select an option', value='Placeholder')], row=0)
+    #localization: placeholder
     async def addselect(self, select, interaction):
         """
         The function `addselect` updates a database record, modifies a list of options, and edits a
         message in response to a user interaction.
-        
-        :param select: The `select` parameter is a `discord.Select` object, which represents a dropdown
-        menu in a Discord message. It allows users to select one option from a list of options
-        :param interaction: The `interaction` parameter is an object that represents the interaction
-        between the user and the bot. It contains information about the user's input and the context of
-        the interaction. In this case, it is used to update the message with a new view after the
-        database update is done
         """
         try:
             select.disabled=False
@@ -115,6 +113,7 @@ class ConfigAboutme(discord.ui.View):
         except:logger.error(traceback.format_exc())
 
     @discord.ui.select(placeholder='Remove a field from your Aboutme', options=[discord.SelectOption(label='Select an option', value='Placeholder')], row=1)
+    #localization: placeholder
     async def removeselect(self, select, interaction):
         """
         The function `removeselect` updates a database and removes an option from a select menu in a
@@ -168,10 +167,11 @@ class AboutModal(discord.ui.Modal):
                 self.add_item(discord.ui.InputText(label=info, value=info_dict[info]))
         except:logger.error(traceback.format_exc())
             
-    async def callback(self, interaction):
+    #localization
+    async def aboutmodal_callback(self, interaction):
         """
-        The `callback` function updates user information in a database and sends an embed message with
-        the updated information.
+        The `aboutmodal_callback` function updates the user's information in a database and sends an
+        embed message with the updated information.
         """
         try:
             values = {}
@@ -322,7 +322,6 @@ def create_aboutme_embed(user: discord.User):
         for info in info_dict.keys():
             if info == 'birthday' and info_dict[info] is not None:
                 age = age_from_string(info_dict[info])
-                print(age)
                 if age is not None:
                     embed.add_field(name='age', value=age)
             embed.add_field(name=info, value=info_dict[info])

@@ -1,10 +1,36 @@
 {
+    "aboutme": {
+        "aboutmodal_callback": {},
+        "addselect": {
+            "placeholder": "Add a field to your aboutme"
+        },
+        "removeselect": {
+            "placeholder": "Remove a field from your aboutme"
+        }
+    },
     "generalutility": {
         "clear_msgs": {
+            "amount_desc": "The amount of messages to clear",
+            "amount_name": "amount",
+            "command_desc": "Deletes x messages from the channel",
             "deleted_message": "Deleting one message.",
             "deleted_messages": "Deleting {} messages."
         },
         "cog_command_error": {
+            "MissingPermissions": "You do not have the necessary permissions.",
+            "NotOwner": "You are not my owner."
+        },
+        "get_avatar": {
+            "command_desc": "Sends a users Avatar",
+            "member_desc": "The user whose avatar you want",
+            "member_name": "user"
+        },
+        "get_guildicon": {
+            "command_desc": "Sends the Guild Icon"
+        }
+    },
+    "guppi": {
+        "on_command_error": {
             "MissingPermissions": "You do not have the necessary permissions.",
             "NotOwner": "You are not my owner."
         }
@@ -12,12 +38,6 @@
     "setup": {
         "server_setup": {
             "bot_info": ""
-        }
-    },
-    "guppi": {
-        "on_command_error": {
-            "MissingPermissions": "",
-            "NotOwner": ""
         }
     }
 }

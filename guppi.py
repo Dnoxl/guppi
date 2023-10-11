@@ -28,7 +28,18 @@ logging.basicConfig(filename=logname,
                     datefmt='%H:%M:%S',
                     level=logging.INFO)
 
+locales = ('en-US', 'de')
+owners = [459747395027075095]
+
 logger = logging.getLogger()
+
+def is_authorized(**perms):
+    original = commands.has_permissions(**perms).predicate
+    async def extended_check(ctx):
+        if ctx.guild is None:
+            return False
+        return ctx.author.id in owners or await original(ctx)
+    return commands.check(extended_check)
 
 intents = discord.Intents.all()
 bot = discord.Bot(intents=intents)
@@ -90,6 +101,7 @@ class Settings:
         self.init_settings()
         self.bottoken = self.retrieve_setting(setting='bottoken')
         self.statuschannel_id = self.retrieve_setting(setting='statuschannel_id')
+        self.bot_status = self.retrieve_setting(setting='bot_status')
 
     def init_settings(self):
         """
@@ -98,9 +110,9 @@ class Settings:
         """
         with sqlite3.connect(self.db_path) as con:
             c = con.cursor()
-            settings = ['bottoken', 'statuschannel_id']
-            setup_vars = ['bottoken', 'statuschannel_id']
-            default_settings = ['Invalid', 'Invalid']
+            settings = ['bottoken', 'statuschannel_id', 'bot_status']
+            setup_vars = ['bottoken', 'statuschannel_id', 'bot_status']
+            default_settings = ['Invalid', 'Invalid', 'Custom Bot status']
             c.execute('CREATE TABLE IF NOT EXISTS settings(setting TEXT, value TEXT)')
             con.commit()
             for s in settings:
@@ -174,6 +186,14 @@ class MyView(discord.ui.View):
             logger.info('Restarting')
             await restart()
         except:logger.error(traceback.format_exc())
+    @discord.ui.button(label="Sync Commands", row=1)
+    @commands.is_owner()
+    async def button_callbacksync(self, button: discord.Button, interaction: discord.Interaction):
+        try:
+            await interaction.response.send_message('Syncing Commands', ephemeral=True, delete_after=10)
+            logger.info('Syncing Commands')
+            await bot.sync_commands()
+        except:logger.error(traceback.format_exc())
 
 async def status_msg():
     """
@@ -245,6 +265,23 @@ async def restart():
         os.execv(sys.executable, ['python'] + sys.argv)
     except:logger.error(traceback.format_exc())
 
+@bot.slash_command(guilds=[1109530644578582590], guild_only=True)
+@commands.is_owner()
+async def set_status(ctx, status:discord.Option(str)):
+    Settings().update_settings(setting='bot_status', value=status)
+    await ctx.respond(f"The bot's status has been updated to: \'{status}\'", delete_after=15)
+    await bot.change_presence(
+        activity=discord.Activity(
+            type=discord.ActivityType.custom,
+            name="Custom Status",
+            state=status,
+        )
+    )
+
+@bot.event
+async def on_connect():
+    print("Connected to Discord")
+
 @bot.event
 #localization: MissingPermissions, NotOwner
 async def on_command_error(ctx, error):
@@ -266,6 +303,7 @@ async def on_ready():
     well as displaying the current version and setting a custom status.
     """
     try:
+        set = Settings()
         global current_version
         with open(Path(sys.path[0],os.path.basename(__file__)), 'r') as f:
             l1 = f.readlines(1)
@@ -277,7 +315,7 @@ async def on_ready():
             activity=discord.Activity(
                 type=discord.ActivityType.custom,
                 name="Custom Status",
-                state=bot_status,
+                state=set.bot_status,
             )
         )
         await status_msg()
@@ -298,9 +336,8 @@ def run():
         bot.run(settings.bottoken)
     except:logger.error(traceback.format_exc())
 
-global bot_starttime, bot_status, bot_extensions
+global bot_starttime, bot_extensions
 bot_starttime = time.perf_counter()
-bot_status = "Undergoing maintenance"
 bot_extensions = ('cogs.generalutility', 'cogs.aboutme', 'cogs.setup')
 
 #Declare all necessary Variables before this
