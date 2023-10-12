@@ -1,11 +1,26 @@
 {
     "aboutme": {
-        "aboutmodal_callback": {},
+        "about_user": {
+            "command_desc": "",
+            "user_desc": "",
+            "user_name": ""
+        },
+        "aboutme_config": {
+            "command_desc": "",
+            "command_name": ""
+        },
+        "aboutmodal_callback": {
+            "embed_author": ""
+        },
         "addselect": {
             "placeholder": "F\u00fcge deinem Aboutme ein Feld hinzu"
         },
         "removeselect": {
             "placeholder": "Entferne ein Feld aus deinem Aboutme"
+        },
+        "update_aboutme": {
+            "command_desc": "",
+            "command_name": ""
         }
     },
     "generalutility": {

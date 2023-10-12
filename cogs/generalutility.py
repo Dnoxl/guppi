@@ -70,6 +70,8 @@ class GeneralUtility(commands.Cog):
         self.bot = bot
         super().__init__()
         self.clear_msgs.description_localizations = {locale: Localization(locale).clear_msgs.command_desc for locale in locales}
+        self.get_guildicon.description_localizations = {locale: Localization(locale).get_guildicon.command_desc for locale in locales}
+        self.get_avatar.description_localizations = {locale: Localization(locale).get_avatar.command_desc for locale in locales}
 
     utility = discord.SlashCommandGroup('utility')
 
@@ -77,6 +79,8 @@ class GeneralUtility(commands.Cog):
     async def on_ready(self):
         [setattr(option, 'description_localizations', {locale: Localization(locale).clear_msgs.amount_desc for locale in locales}) for option in self.clear_msgs.options if option.name == 'amount']
         [setattr(option, 'name_localizations', {locale: Localization(locale).clear_msgs.amount_name for locale in locales}) for option in self.clear_msgs.options if option.name == 'amount']
+        [setattr(option, 'description_localizations', {locale: Localization(locale).get_avatar.member_desc for locale in locales}) for option in self.get_avatar.options if option.name == 'user']
+        [setattr(option, 'name_localizations', {locale: Localization(locale).get_avatar.member_name for locale in locales}) for option in self.get_avatar.options if option.name == 'user']
 
     @utility.command(name='servericon', description='Fetches the servers Icon.', guild_only=True)
     #localization: command_desc
@@ -98,6 +102,7 @@ class GeneralUtility(commands.Cog):
     async def clear_msgs(self, ctx:discord.ApplicationContext, amount: Option(int, description='The maximum amount of messages to clear.')):
         try:
             loc = Localization(ctx.locale)
+            await ctx.defer()
             msg_count = 0
             async for msg in ctx.channel.history(limit=amount):
                 msg_count += 1
@@ -105,12 +110,13 @@ class GeneralUtility(commands.Cog):
                     break
             if msg_count < amount:
                 amount = msg_count
+            await ctx.channel.purge(limit=amount)
             if amount == 1:
                 await ctx.respond(loc.clear_msgs.deleted_message, ephemeral=True, delete_after=10)
             else:
                 await ctx.respond(loc.clear_msgs.deleted_messages.format(amount), ephemeral=True, delete_after=10)
-            await ctx.channel.purge(limit=amount)   
-        except:logger.error(traceback.format_exc())
+        except:
+            logger.error(traceback.format_exc())
         
     #localization: MissingPermissions, NotOwner
     async def cog_command_error(self, ctx, error):

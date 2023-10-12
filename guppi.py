@@ -172,7 +172,6 @@ class MyView(discord.ui.View):
         try:
             await interaction.response.defer()
             await interaction.message.delete()
-            print("Bot Closed")
             logger.info("Bot Closed")
             await bot.close()
             sys.exit(1)
@@ -195,49 +194,34 @@ class MyView(discord.ui.View):
             await bot.sync_commands()
         except:logger.error(traceback.format_exc())
 
+@tasks.loop(seconds=5)
 async def status_msg():
     """
     The `status_msg` function updates the performance information of a bot in a Discord channel and
     calculates the average load time.
     """
-    startup = StartupTimes(Path(sys.path[0], "bot.db"))
     settings = Settings()
     chan = bot.get_channel(settings.statuschannel_id) or await bot.fetch_channel(settings.statuschannel_id)
+    del settings
     messages = await chan.history(limit=None).flatten()
-    if len(messages) != 0:
-        for msg in messages:
-            if msg.author == bot.user:
-                await msg.delete()
-    bot_readytime = time.perf_counter()
-    load_time = round(bot_readytime - bot_starttime, 2)
-    load_times = startup.retrieve_startup_times()
-    load_times.append(load_time)
-    if len(load_times) > 3:
-        while len(load_times) > 3:
-            load_times.pop(0)
-    startup.clear_startup_times()
-    for load_time in load_times:
-        startup.update_startup_times(load_time)
-    avg_load_time = round(sum(load_times)/len(load_times),2)
+    self_msgs = [message for message in messages if message.author == bot.user]
+    if len(self_msgs) > 1:
+        for message in self_msgs:
+            await message.delete()
+    self_msgs = [message for message in messages if message.author == bot.user]
+    if len(self_msgs) == 1:
+        msg = self_msgs[0]
     text = f'Bot was ready in: {load_time}s\nAvg. time until ready: {avg_load_time}s'
     embed=discord.Embed(colour=0x2ecc71)
     embed.add_field(name='Performance Information:', value=text)
-    embed.set_footer(
-        text=f'Uptime: {str(datetime.timedelta(seconds=int(time.perf_counter() - bot_starttime)))}'
-    )
-    msg = await chan.send(embed=embed,view=MyView())
-    while True:
-        await asyncio.sleep(5)
-        text = f'Bot was ready in: {load_time}s\nAvg. time until ready: {avg_load_time}s'
-        embed=discord.Embed(colour=0x2ecc71)
-        embed.add_field(name='Performance Information:', value=text)
-        embed.set_footer(
-            text=f'Uptime: {str(datetime.timedelta(seconds=int(time.perf_counter() - bot_starttime)))}'
-        )
-        try:
-            await msg.edit(embed=embed,view=MyView())
-        except discord.NotFound:
-            msg = await chan.send(embed=embed,view=MyView())
+    embed.set_footer(text=f'Uptime: {str(datetime.timedelta(seconds=int(time.perf_counter() - bot_starttime)))}')
+    self_msgs = [message for message in messages if message.author == bot.user]
+    if len(self_msgs) == 0:
+        msg = await chan.send(embed=embed,view=MyView())
+    try:
+        await msg.edit(embed=embed,view=MyView())
+    except:
+        msg = await chan.send(embed=embed,view=MyView())
 
 @tasks.loop(seconds=10)
 async def version_control():
@@ -269,7 +253,7 @@ async def restart():
 @commands.is_owner()
 async def set_status(ctx, status:discord.Option(str)):
     Settings().update_settings(setting='bot_status', value=status)
-    await ctx.respond(f"The bot's status has been updated to: \'{status}\'", delete_after=15)
+    await ctx.respond(f"The bot's status has been updated to: \'{status}\'", delete_after=15, ephemeral=True)
     await bot.change_presence(
         activity=discord.Activity(
             type=discord.ActivityType.custom,
@@ -278,9 +262,23 @@ async def set_status(ctx, status:discord.Option(str)):
         )
     )
 
+@bot.slash_command(guilds=[1109530644578582590], guild_only=True)
+@commands.is_owner()
+async def show_log(ctx):
+    log = discord.File(fp=Path(sys.path[0], 'bot.log'))
+    await ctx.respond(file=log, ephemeral=True, delete_after=120)
+
+@bot.slash_command(guilds=[1109530644578582590], guild_only=True)
+@commands.is_owner()
+async def clear_log(ctx):
+    with open (Path(sys.path[0], 'bot.log'), 'r+') as f:
+        f.seek(0)
+        f.truncate(0)
+    await ctx.respond('Cleared the Log', ephemeral=True, delete_after=10)
+
 @bot.event
 async def on_connect():
-    print("Connected to Discord")
+    pass
 
 @bot.event
 #localization: MissingPermissions, NotOwner
@@ -318,9 +316,24 @@ async def on_ready():
                 state=set.bot_status,
             )
         )
-        await status_msg()
+        await bot_ready()
+        status_msg.start()
     except:logger.error(traceback.format_exc())
 
+async def bot_ready():
+    global load_time, avg_load_time
+    startup = StartupTimes(Path(sys.path[0], "bot.db"))
+    bot_readytime = time.perf_counter()
+    load_time = round(bot_readytime - bot_starttime, 2)
+    load_times = startup.retrieve_startup_times()
+    load_times.append(load_time)
+    if len(load_times) > 20:
+        while len(load_times) > 20:
+            load_times.pop(0)
+    startup.clear_startup_times()
+    [startup.update_startup_times(lt) for lt in load_times]
+    avg_load_time = round(sum(load_times)/len(load_times),2)
+    
 def run():
     """
     The function runs a bot by loading extensions and running it with the bot token.

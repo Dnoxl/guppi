@@ -86,9 +86,9 @@ class ConfigAboutme(discord.ui.View):
                 con.commit()
                 self.remops = [row[0] for row in c.execute('SELECT info FROM aboutme WHERE user_id = ? AND toggle = 1',(user_id,)).fetchall()]
                 self.addops = [row[0] for row in c.execute('SELECT info FROM aboutme WHERE user_id = ? AND toggle = 0',(user_id,)).fetchall()]
-                self.addselect.options = [discord.SelectOption(label=info, value=info) for info in self.addops] if self.addops else []
+                self.addselect.options = [discord.SelectOption(label=info, value=info) for info in self.addops] if self.addops else self.addselect.options
                 self.addselect.disabled = True if not self.addops else False
-                self.removeselect.options = [discord.SelectOption(label=info, value=info) for info in self.remops] if self.remops else []
+                self.removeselect.options = [discord.SelectOption(label=info, value=info) for info in self.remops] if self.remops else self.removeselect.options
                 self.removeselect.disabled = True if not self.remops else False
                 self.addselect.placeholder = {locale: Localization(locale).addselect.placeholder for locale in locales}
         except:logger.error(traceback.format_exc())
@@ -107,8 +107,7 @@ class ConfigAboutme(discord.ui.View):
                 c = con.cursor()
                 c.execute('UPDATE aboutme SET toggle = ? WHERE user_id = ? AND info = ?', (1, self.user_id, selval,))
                 con.commit()
-            self.aoptions = [option for option in self.aoptions if option.value != selval]
-            self.addselect.options = self.aoptions
+            self.addselect.options = [option for option in self.addselect.options if option.value != selval]
             await interaction.response.edit_message(view=ConfigAboutme(self.user_id))
         except:logger.error(traceback.format_exc())
 
@@ -126,8 +125,7 @@ class ConfigAboutme(discord.ui.View):
                 c = con.cursor()
                 c.execute('UPDATE aboutme SET toggle = ? WHERE user_id = ? AND info = ?', (0, self.user_id, selval,))
                 con.commit()
-            self.roptions = [option for option in self.roptions if option.value != selval]
-            self.removeselect.options = self.roptions
+            self.removeselect.options = [option for option in self.removeselect.options if option.value != selval]
             await interaction.response.edit_message(view=ConfigAboutme(self.user_id))
         except:logger.error(traceback.format_exc())
     
@@ -167,7 +165,7 @@ class AboutModal(discord.ui.Modal):
                 self.add_item(discord.ui.InputText(label=info, value=info_dict[info]))
         except:logger.error(traceback.format_exc())
             
-    #localization
+    #localization: embed_author
     async def aboutmodal_callback(self, interaction):
         """
         The `aboutmodal_callback` function updates the user's information in a database and sends an
@@ -181,10 +179,7 @@ class AboutModal(discord.ui.Modal):
                         child.label = child.label.replace('(dd.mm.yyyy)', '')
                     values[child.label] = child.value
             embed = discord.Embed()
-            embed.set_author(
-                name=f'About me of {interaction.user.display_name}',
-                icon_url=interaction.user.avatar,
-            )
+            embed.set_author(name=f'About me of {interaction.user.display_name}', icon_url=interaction.user.avatar,)
             with sqlite3.connect(self.db_path) as con:
                 c = con.cursor()
                 for value in values:
@@ -210,6 +205,12 @@ class Social(commands.Cog):
         
     @commands.Cog.listener()
     async def on_ready(self):
+        return
+        [setattr(option, 'description_localizations', {locale: Localization(locale).clear_msgs.amount_desc for locale in locales}) for option in self.clear_msgs.options if option.name == 'amount']
+        [setattr(option, 'name_localizations', {locale: Localization(locale).clear_msgs.amount_name for locale in locales}) for option in self.clear_msgs.options if option.name == 'amount']
+
+    @commands.Cog.listener()
+    async def on_ready(self):
         """
         The function initializes a SQLite database table called "aboutme" and inserts default values for
         certain information fields for each user in the bot's user list.
@@ -229,6 +230,7 @@ class Social(commands.Cog):
     aboutme = discord.SlashCommandGroup('aboutme')
 
     @aboutme.command(name='configure', description= 'Choose what information you want to display.')
+    #localization: command_name, command_desc
     async def aboutme_config(self, ctx):
         """
         The `aboutme_config` function is an asynchronous function that takes a `ctx` parameter and
@@ -239,6 +241,7 @@ class Social(commands.Cog):
         except:logger.error(traceback.format_exc())
 
     @aboutme.command(name='write',description='Write some Information about yourself.')    
+    #localization: command_name, command_desc
     async def update_aboutme(self, ctx):
         """
         The function `update_aboutme` is an asynchronous function that takes a `ctx` parameter and sends
@@ -249,7 +252,7 @@ class Social(commands.Cog):
         except:logger.error(traceback.format_exc())
         
     @user_command(name='Aboutme', cog='social')
-    async def aboutme_user(self, ctx, user: discord.Member):
+    async def usercmd_about_user(self, ctx, user: discord.Member):
         """
         This function is used to display the "About Me" information of a user in a Discord embed.
         """
@@ -259,6 +262,7 @@ class Social(commands.Cog):
         except:logger.error(traceback.format_exc())
 
     @aboutme.command(name='user', description='Show the Aboutme of another user.')
+    #localization: command_desc, user_name, user_desc
     async def about_user(self, ctx, user: Option(discord.Member, description='User whose Aboutme you want to see.')):
         """
         This function is used to display the "About Me" information of a user in a Discord embed.
