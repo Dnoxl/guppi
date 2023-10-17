@@ -171,7 +171,6 @@ class MyView(discord.ui.View):
     async def button_callbackkillbot(self, button, interaction):
         try:
             await interaction.response.defer()
-            await interaction.message.delete()
             logger.info("Bot Closed")
             await bot.close()
             sys.exit(1)
@@ -181,7 +180,6 @@ class MyView(discord.ui.View):
     async def button_callbackrestart(self, button: discord.Button, interaction: discord.Interaction):
         try:
             await interaction.response.defer()
-            await interaction.message.delete()
             logger.info('Restarting')
             await restart()
         except:logger.error(traceback.format_exc())
@@ -249,7 +247,7 @@ async def restart():
         os.execv(sys.executable, ['python'] + sys.argv)
     except:logger.error(traceback.format_exc())
 
-@bot.slash_command(guilds=[1109530644578582590], guild_only=True)
+@bot.slash_command(guild_ids=[1109530644578582590], guild_only=True)
 @commands.is_owner()
 async def set_status(ctx, status:discord.Option(str)):
     Settings().update_settings(setting='bot_status', value=status)
@@ -262,19 +260,29 @@ async def set_status(ctx, status:discord.Option(str)):
         )
     )
 
-@bot.slash_command(guilds=[1109530644578582590], guild_only=True)
+@bot.slash_command(guild_ids=[1109530644578582590], guild_only=True)
 @commands.is_owner()
 async def show_log(ctx):
     log = discord.File(fp=Path(sys.path[0], 'bot.log'))
     await ctx.respond(file=log, ephemeral=True, delete_after=120)
 
-@bot.slash_command(guilds=[1109530644578582590], guild_only=True)
+@bot.slash_command(guild_ids=[1109530644578582590], guild_only=True)
 @commands.is_owner()
 async def clear_log(ctx):
     with open (Path(sys.path[0], 'bot.log'), 'r+') as f:
         f.seek(0)
         f.truncate(0)
     await ctx.respond('Cleared the Log', ephemeral=True, delete_after=10)
+
+@bot.slash_command(guild_ids=[1109530644578582590], guild_only=True)
+@commands.is_owner()
+async def killbot(ctx):
+    try:
+        await ctx.defer()
+        logger.info("Bot Closed")
+        await bot.close()
+        sys.exit(1)
+    except:logger.error(traceback.format_exc())
 
 @bot.event
 async def on_connect():
@@ -351,7 +359,7 @@ def run():
 
 global bot_starttime, bot_extensions
 bot_starttime = time.perf_counter()
-bot_extensions = ('cogs.generalutility', 'cogs.aboutme', 'cogs.setup')
+bot_extensions = ('cogs.generalutility', 'cogs.aboutme', 'cogs.social', 'cogs.clanbank')
 
 #Declare all necessary Variables before this
 run()
